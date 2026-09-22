@@ -23,8 +23,35 @@ impl MerkleTree{
         let hashedParent = Sha256::digest(parent);
         self.level += 1;
         Sha256::digest(hashedParent).into()  // prevents length extension attack
-        
     }
+
+    fn  add_leaf(&mut self, data: &[u8]) -> [0u8; 32] {
+        let mut input = vec![0u8];
+        input.extend_from_slice(data);
+        let hash: [u8; 32] = Sha256::digest(&input).into();
+        self.leaves.push(MerkleLeaf {id: self.next_Id, hash});
+        self.next_Id += 1;
+        hash
+    }
+
+   fn build_root(&mut self) -> [u8; 32] {
+    let mut level: Vec<[u8; 32]> = self.leaves.iter().map(|l| l.hash).collect();
+
+    while level.len() > 1 {
+        let mut next_level = Vec::new();
+        let mut i = 0;
+        while i < level.len() {
+            let left = level[i];
+            let right = if i + 1 < level.len() { level[i + 1] } else { left };
+            next_level.push(self.parentHash(left, right));
+            i += 2;
+        }
+        level = next_level;
+    }
+
+    level[0]
+}
+
 }
 
 fn main() {}
