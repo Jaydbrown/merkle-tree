@@ -1,6 +1,8 @@
 use sha2::{Digest, Sha256};
 use primitive_types::U256;
 
+mod proof;
+
 struct MerkleLeaf{
     id: u64,
     hash: [u8; 32],
@@ -25,7 +27,7 @@ impl MerkleTree{
         Sha256::digest(hashedParent).into()  // prevents length extension attack
     }
 
-    fn  add_leaf(&mut self, data: &[u8]) -> [0u8; 32] {
+    fn  add_leaf(&mut self, data: &[u8]) -> [u8; 32] {
         let mut input = vec![0u8];
         input.extend_from_slice(data);
         let hash: [u8; 32] = Sha256::digest(&input).into();
@@ -54,4 +56,27 @@ impl MerkleTree{
 
 }
 
-fn main() {}
+fn main() {
+    let mut tree = MerkleTree {
+        leaves: Vec::new(),
+        next_Id: 0,
+        level: 0,
+    };
+
+    tree.add_leaf(b"transaction 1");
+    tree.add_leaf(b"transaction 2");
+    tree.add_leaf(b"transaction 3");
+    tree.add_leaf(b"transaction 4");
+
+    let root = tree.build_root();
+
+    let target_index = 2;
+    let leaf_hash = tree.leaves[target_index].hash;
+    let steps = tree.get_proof(target_index).expect("leaf exists");
+
+    let valid = proof::verify_proof(leaf_hash, &steps, root);
+
+    println!("root:  {:x?}", root);
+    println!("proof steps: {}", steps.len());
+    println!("leaf {} verifies: {}", target_index, valid);
+}
