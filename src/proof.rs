@@ -1,5 +1,4 @@
 use sha2::{Digest, Sha256};
-use primitive_types::U256;
 
 use crate::MerkleTree;
 
@@ -8,14 +7,12 @@ pub struct ProofStep {
     pub sibling_is_left: bool,
 }
 
-// same left/right combination rule as MerkleTree::parentHash, kept standalone
-// so verification doesn't need a live MerkleTree instance.
 fn combine(left: [u8; 32], right: [u8; 32]) -> [u8; 32] {
-    let a = U256::from_big_endian(&left);
-    let b = U256::from_big_endian(&right);
-    let (sum, _) = a.overflowing_add(b);
-    let parent = sum.to_big_endian();
-    let hashed_parent = Sha256::digest(parent);
+    let mut input = vec![1u8]; 
+    input.extend_from_slice(&left);
+    input.extend_from_slice(&right);
+
+    let hashed_parent = Sha256::digest(&input);
     Sha256::digest(hashed_parent).into()
 }
 

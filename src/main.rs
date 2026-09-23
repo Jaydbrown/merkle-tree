@@ -1,5 +1,4 @@
 use sha2::{Digest, Sha256};
-use primitive_types::U256;
 
 mod proof;
 
@@ -16,13 +15,11 @@ struct MerkleTree {
 
 impl MerkleTree{
    fn parentHash(&mut self, left: [u8; 32], right: [u8; 32]) -> [u8; 32] {
-        let a = U256::from_big_endian(&left);
-        let b = U256::from_big_endian(&right);
-        let (sum, _) = a.overflowing_add(b);   
+        let mut input = vec![1u8]; 
+        input.extend_from_slice(&left);
+        input.extend_from_slice(&right);
 
-        let mut parent = sum.to_big_endian();
-
-        let hashedParent = Sha256::digest(parent);
+        let hashedParent = Sha256::digest(&input);
         self.level += 1;
         Sha256::digest(hashedParent).into()  // prevents length extension attack
     }
